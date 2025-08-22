@@ -346,35 +346,126 @@ const KafkaDashboard = () => {
   const refreshCluster = async (env: string, cluster: string) => {
     setLoading(true);
     try {
-      // In real implementation, make API call here
-      // const response = await fetch(`${apiUrl}/api/health/${env}/${cluster}`);
-      // const data = await response.json();
-      console.log(`Refreshing ${env}/${cluster}`);
+      // Real API call to your backend
+      const response = await fetch(`${apiUrl}/api/health/${env}/${cluster}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data: ClusterHealth = await response.json();
+      
+      // Update the specific cluster in the state
+      setClusters(prevClusters => 
+        prevClusters.map(c => 
+          c.environment === env && c.cluster_name === cluster ? data : c
+        )
+      );
+      
+      console.log(`Successfully refreshed ${env}/${cluster}`);
     } catch (error) {
-      console.error("Failed to refresh cluster:", error);
+      console.error(`Failed to refresh cluster ${env}/${cluster}:`, error);
+      // Optionally update cluster status to show error
+      setClusters(prevClusters => 
+        prevClusters.map(c => {
+          if (c.environment === env && c.cluster_name === cluster) {
+            return {
+              ...c,
+              kafka: { ...c.kafka, status: "UNREACHABLE" as const, error_message: "API connection failed" },
+              zookeeper: { ...c.zookeeper, status: "UNREACHABLE" as const, error_message: "API connection failed" }
+            };
+          }
+          return c;
+        })
+      );
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Load mock data
-    setClusters(mockClusters);
-    setEnvironments(["dev", "qas", "prod"]);
+    const loadInitialData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch available environments from API
+        const envResponse = await fetch(`${apiUrl}/api/environments`);
+        if (envResponse.ok) {
+          const envData = await envResponse.json();
+          setEnvironments(envData);
+        } else {
+          // Fallback to mock environments if API fails
+          setEnvironments(["dev", "qas", "prod"]);
+        }
+        
+        // Load all cluster data
+        const clusterPromises: Promise<ClusterHealth>[] = [];
+        const environments = ["dev", "qas", "prod"]; // You can get this from API too
+        const clusterTypes = ["hcp", "rfh", "jiobp"]; // You can get this from API too
+        
+        environments.forEach(env => {
+          clusterTypes.forEach(cluster => {
+            clusterPromises.push(
+              fetch(`${apiUrl}/api/health/${env}/${cluster}`)
+                .then(response => {
+                  if (!response.ok) throw new Error(`Failed to fetch ${env}/${cluster}`);
+                  return response.json();
+                })
+                .catch(error => {
+                  console.error(`Error loading ${env}/${cluster}:`, error);
+                  // Return mock data as fallback for this specific cluster
+                  const mockCluster = mockClusters.find(c => c.environment === env && c.cluster_name === cluster);
+                  return mockCluster || {
+                    timestamp: new Date().toISOString(),
+                    environment: env,
+                    cluster_name: cluster,
+                    cluster_description: `${env.toUpperCase()} ${cluster.toUpperCase()} Kafka Cluster`,
+                    kafka: { status: "UNREACHABLE" as const, error_message: "Failed to connect to API" },
+                    zookeeper: { status: "UNREACHABLE" as const, error_message: "Failed to connect to API" }
+                  };
+                })
+            );
+          });
+        });
+        
+        const clusterData = await Promise.all(clusterPromises);
+        setClusters(clusterData.filter(Boolean));
+        
+        // Initialize auto-refresh settings
+        const initialAutoRefresh: Record<string, boolean> = {};
+        const initialInterval: Record<string, number> = {};
+        
+        clusterData.forEach(cluster => {
+          const key = `${cluster.environment}-${cluster.cluster_name}`;
+          initialAutoRefresh[key] = true; // Auto-refresh enabled by default
+          initialInterval[key] = 30; // 30 seconds default
+        });
+        
+        setAutoRefresh(initialAutoRefresh);
+        setRefreshInterval(initialInterval);
+        
+      } catch (error) {
+        console.error("Failed to load initial data:", error);
+        // Fallback to mock data if everything fails
+        setClusters(mockClusters);
+        setEnvironments(["dev", "qas", "prod"]);
+        
+        const initialAutoRefresh: Record<string, boolean> = {};
+        const initialInterval: Record<string, number> = {};
+        
+        mockClusters.forEach(cluster => {
+          const key = `${cluster.environment}-${cluster.cluster_name}`;
+          initialAutoRefresh[key] = true;
+          initialInterval[key] = 30;
+        });
+        
+        setAutoRefresh(initialAutoRefresh);
+        setRefreshInterval(initialInterval);
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    // Initialize auto-refresh settings
-    const initialAutoRefresh: Record<string, boolean> = {};
-    const initialInterval: Record<string, number> = {};
-    
-    mockClusters.forEach(cluster => {
-      const key = `${cluster.environment}-${cluster.cluster_name}`;
-      initialAutoRefresh[key] = true; // Auto-refresh enabled by default
-      initialInterval[key] = 30; // 30 seconds default
-    });
-    
-    setAutoRefresh(initialAutoRefresh);
-    setRefreshInterval(initialInterval);
-  }, []);
+    loadInitialData();
+  }, [apiUrl]);
 
   // Auto-refresh effect
   useEffect(() => {
