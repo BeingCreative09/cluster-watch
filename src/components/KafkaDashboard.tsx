@@ -63,8 +63,9 @@ const KafkaDashboard = () => {
   const [environments, setEnvironments] = useState<string[]>([]);
   const [selectedEnv, setSelectedEnv] = useState<string>("dev");
 
-  // Mock data for demonstration
+  // Mock data for demonstration - Multiple cluster types per environment
   const mockClusters: ClusterHealth[] = [
+    // DEV Environment Clusters
     {
       timestamp: new Date().toISOString(),
       environment: "dev",
@@ -76,9 +77,9 @@ const KafkaDashboard = () => {
         active_brokers: 3,
         cluster_id: "4YYgtjE_RKiJ_rDWp5MDbw",
         broker_details: [
-          { id: 0, host: "devkafka1.ril.com:9093", isController: true, status: "ACTIVE" },
-          { id: 1, host: "devkafka2.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 2, host: "devkafka3.ril.com:9093", isController: false, status: "ACTIVE" }
+          { id: 0, host: "devhcp1.ril.com:9093", isController: true, status: "ACTIVE" },
+          { id: 1, host: "devhcp2.ril.com:9093", isController: false, status: "ACTIVE" },
+          { id: 2, host: "devhcp3.ril.com:9093", isController: false, status: "ACTIVE" }
         ],
         error_message: null
       },
@@ -87,9 +88,95 @@ const KafkaDashboard = () => {
         expected_nodes: 3,
         active_nodes: 3,
         zookeeper_details: [
-          { id: 1, host: "devzk1.ril.com:2181", mode: "leader", status: "ACTIVE" },
-          { id: 2, host: "devzk2.ril.com:2181", mode: "follower", status: "ACTIVE" },
-          { id: 3, host: "devzk3.ril.com:2181", mode: "follower", status: "ACTIVE" }
+          { id: 1, host: "devhcp-zk1.ril.com:2181", mode: "leader", status: "ACTIVE" },
+          { id: 2, host: "devhcp-zk2.ril.com:2181", mode: "follower", status: "ACTIVE" },
+          { id: 3, host: "devhcp-zk3.ril.com:2181", mode: "follower", status: "ACTIVE" }
+        ],
+        error_message: null
+      }
+    },
+    {
+      timestamp: new Date().toISOString(),
+      environment: "dev",
+      cluster_name: "rfh",
+      cluster_description: "Development RFH Kafka Cluster",
+      kafka: {
+        status: "HEALTHY",
+        expected_brokers: 2,
+        active_brokers: 2,
+        cluster_id: "3XXgtjE_RKiJ_rDWp5MDbr",
+        broker_details: [
+          { id: 0, host: "devrfh1.ril.com:9093", isController: true, status: "ACTIVE" },
+          { id: 1, host: "devrfh2.ril.com:9093", isController: false, status: "ACTIVE" }
+        ],
+        error_message: null
+      },
+      zookeeper: {
+        status: "HEALTHY",
+        expected_nodes: 2,
+        active_nodes: 2,
+        zookeeper_details: [
+          { id: 1, host: "devrfh-zk1.ril.com:2181", mode: "leader", status: "ACTIVE" },
+          { id: 2, host: "devrfh-zk2.ril.com:2181", mode: "follower", status: "ACTIVE" }
+        ],
+        error_message: null
+      }
+    },
+    {
+      timestamp: new Date().toISOString(),
+      environment: "dev",
+      cluster_name: "jiobp",
+      cluster_description: "Development JIOBP Kafka Cluster",
+      kafka: {
+        status: "UNHEALTHY",
+        expected_brokers: 3,
+        active_brokers: 2,
+        cluster_id: "6WWgtjE_RKiJ_rDWp5MDbj",
+        broker_details: [
+          { id: 0, host: "devjiobp1.ril.com:9093", isController: true, status: "ACTIVE" },
+          { id: 1, host: "devjiobp2.ril.com:9093", isController: false, status: "ACTIVE" },
+          { id: 2, host: "devjiobp3.ril.com:9093", isController: false, status: "DOWN" }
+        ],
+        error_message: "Broker 2 connection timeout"
+      },
+      zookeeper: {
+        status: "HEALTHY",
+        expected_nodes: 3,
+        active_nodes: 3,
+        zookeeper_details: [
+          { id: 1, host: "devjiobp-zk1.ril.com:2181", mode: "leader", status: "ACTIVE" },
+          { id: 2, host: "devjiobp-zk2.ril.com:2181", mode: "follower", status: "ACTIVE" },
+          { id: 3, host: "devjiobp-zk3.ril.com:2181", mode: "follower", status: "ACTIVE" }
+        ],
+        error_message: null
+      }
+    },
+    // QAS Environment Clusters
+    {
+      timestamp: new Date().toISOString(),
+      environment: "qas",
+      cluster_name: "hcp",
+      cluster_description: "QA HCP Kafka Cluster",
+      kafka: {
+        status: "HEALTHY",
+        expected_brokers: 3,
+        active_brokers: 3,
+        cluster_id: "5ZZgtjE_RKiJ_rDWp5MDbx",
+        broker_details: [
+          { id: 0, host: "qahcp1.ril.com:9093", isController: true, status: "ACTIVE" },
+          { id: 1, host: "qahcp2.ril.com:9093", isController: false, status: "ACTIVE" },
+          { id: 2, host: "qahcp3.ril.com:9093", isController: false, status: "ACTIVE" }
+        ],
+        error_message: null
+      },
+      zookeeper: {
+        status: "HEALTHY",
+        expected_nodes: 3,
+        active_nodes: 3,
+        zookeeper_details: [
+          { id: 1, host: "qahcp-zk1.ril.com:2181", mode: "leader", status: "ACTIVE" },
+          { id: 2, host: "qahcp-zk2.ril.com:2181", mode: "follower", status: "ACTIVE" },
+          { id: 3, host: "qahcp-zk3.ril.com:2181", mode: "follower", status: "ACTIVE" }
         ],
         error_message: null
       }
@@ -97,28 +184,118 @@ const KafkaDashboard = () => {
     {
       timestamp: new Date().toISOString(),
       environment: "qas",
-      cluster_name: "hcp",
-      cluster_description: "QA HCP Kafka Cluster",
+      cluster_name: "rfh",
+      cluster_description: "QA RFH Kafka Cluster",
       kafka: {
-        status: "UNHEALTHY",
+        status: "UNREACHABLE",
         expected_brokers: 3,
-        active_brokers: 2,
-        cluster_id: "5ZZgtjE_RKiJ_rDWp5MDbx",
+        active_brokers: 0,
+        cluster_id: null,
+        broker_details: [],
+        error_message: "Unable to connect to cluster - network timeout"
+      },
+      zookeeper: {
+        status: "UNREACHABLE",
+        expected_nodes: 3,
+        active_nodes: 0,
+        zookeeper_details: [],
+        error_message: "Connection refused to all Zookeeper nodes"
+      }
+    },
+    // PROD Environment Clusters
+    {
+      timestamp: new Date().toISOString(),
+      environment: "prod",
+      cluster_name: "hcp",
+      cluster_description: "Production HCP Kafka Cluster",
+      kafka: {
+        status: "HEALTHY",
+        expected_brokers: 5,
+        active_brokers: 5,
+        cluster_id: "7AAgtjE_RKiJ_rDWp5MDbp",
         broker_details: [
-          { id: 0, host: "qakafka1.ril.com:9093", isController: true, status: "ACTIVE" },
-          { id: 1, host: "qakafka2.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 2, host: "qakafka3.ril.com:9093", isController: false, status: "DOWN" }
+          { id: 0, host: "prodhcp1.ril.com:9093", isController: false, status: "ACTIVE" },
+          { id: 1, host: "prodhcp2.ril.com:9093", isController: true, status: "ACTIVE" },
+          { id: 2, host: "prodhcp3.ril.com:9093", isController: false, status: "ACTIVE" },
+          { id: 3, host: "prodhcp4.ril.com:9093", isController: false, status: "ACTIVE" },
+          { id: 4, host: "prodhcp5.ril.com:9093", isController: false, status: "ACTIVE" }
         ],
-        error_message: "Broker 2 is not responding"
+        error_message: null
+      },
+      zookeeper: {
+        status: "HEALTHY",
+        expected_nodes: 5,
+        active_nodes: 5,
+        zookeeper_details: [
+          { id: 1, host: "prodhcp-zk1.ril.com:2181", mode: "follower", status: "ACTIVE" },
+          { id: 2, host: "prodhcp-zk2.ril.com:2181", mode: "leader", status: "ACTIVE" },
+          { id: 3, host: "prodhcp-zk3.ril.com:2181", mode: "follower", status: "ACTIVE" },
+          { id: 4, host: "prodhcp-zk4.ril.com:2181", mode: "follower", status: "ACTIVE" },
+          { id: 5, host: "prodhcp-zk5.ril.com:2181", mode: "follower", status: "ACTIVE" }
+        ],
+        error_message: null
+      }
+    },
+    {
+      timestamp: new Date().toISOString(),
+      environment: "prod",
+      cluster_name: "rfh",
+      cluster_description: "Production RFH Kafka Cluster",
+      kafka: {
+        status: "HEALTHY",
+        expected_brokers: 4,
+        active_brokers: 4,
+        cluster_id: "8BBgtjE_RKiJ_rDWp5MDbq",
+        broker_details: [
+          { id: 0, host: "prodrfh1.ril.com:9093", isController: true, status: "ACTIVE" },
+          { id: 1, host: "prodrfh2.ril.com:9093", isController: false, status: "ACTIVE" },
+          { id: 2, host: "prodrfh3.ril.com:9093", isController: false, status: "ACTIVE" },
+          { id: 3, host: "prodrfh4.ril.com:9093", isController: false, status: "ACTIVE" }
+        ],
+        error_message: null
       },
       zookeeper: {
         status: "HEALTHY",
         expected_nodes: 3,
         active_nodes: 3,
         zookeeper_details: [
-          { id: 1, host: "qazk1.ril.com:2181", mode: "leader", status: "ACTIVE" },
-          { id: 2, host: "qazk2.ril.com:2181", mode: "follower", status: "ACTIVE" },
-          { id: 3, host: "qazk3.ril.com:2181", mode: "follower", status: "ACTIVE" }
+          { id: 1, host: "prodrfh-zk1.ril.com:2181", mode: "leader", status: "ACTIVE" },
+          { id: 2, host: "prodrfh-zk2.ril.com:2181", mode: "follower", status: "ACTIVE" },
+          { id: 3, host: "prodrfh-zk3.ril.com:2181", mode: "follower", status: "ACTIVE" }
+        ],
+        error_message: null
+      }
+    },
+    {
+      timestamp: new Date().toISOString(),
+      environment: "prod",
+      cluster_name: "jiobp",
+      cluster_description: "Production JIOBP Kafka Cluster",
+      kafka: {
+        status: "HEALTHY",
+        expected_brokers: 6,
+        active_brokers: 6,
+        cluster_id: "9CCgtjE_RKiJ_rDWp5MDbz",
+        broker_details: [
+          { id: 0, host: "prodjiobp1.ril.com:9093", isController: false, status: "ACTIVE" },
+          { id: 1, host: "prodjiobp2.ril.com:9093", isController: false, status: "ACTIVE" },
+          { id: 2, host: "prodjiobp3.ril.com:9093", isController: true, status: "ACTIVE" },
+          { id: 3, host: "prodjiobp4.ril.com:9093", isController: false, status: "ACTIVE" },
+          { id: 4, host: "prodjiobp5.ril.com:9093", isController: false, status: "ACTIVE" },
+          { id: 5, host: "prodjiobp6.ril.com:9093", isController: false, status: "ACTIVE" }
+        ],
+        error_message: null
+      },
+      zookeeper: {
+        status: "HEALTHY",
+        expected_nodes: 5,
+        active_nodes: 5,
+        zookeeper_details: [
+          { id: 1, host: "prodjiobp-zk1.ril.com:2181", mode: "follower", status: "ACTIVE" },
+          { id: 2, host: "prodjiobp-zk2.ril.com:2181", mode: "follower", status: "ACTIVE" },
+          { id: 3, host: "prodjiobp-zk3.ril.com:2181", mode: "leader", status: "ACTIVE" },
+          { id: 4, host: "prodjiobp-zk4.ril.com:2181", mode: "follower", status: "ACTIVE" },
+          { id: 5, host: "prodjiobp-zk5.ril.com:2181", mode: "follower", status: "ACTIVE" }
         ],
         error_message: null
       }
