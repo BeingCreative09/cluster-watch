@@ -63,244 +63,6 @@ const KafkaDashboard = () => {
   const [environments, setEnvironments] = useState<string[]>([]);
   const [selectedEnv, setSelectedEnv] = useState<string>("dev");
 
-  // Mock data for demonstration - Multiple cluster types per environment
-  const mockClusters: ClusterHealth[] = [
-    // DEV Environment Clusters
-    {
-      timestamp: new Date().toISOString(),
-      environment: "dev",
-      cluster_name: "hcp",
-      cluster_description: "Development HCP Kafka Cluster",
-      kafka: {
-        status: "HEALTHY",
-        expected_brokers: 3,
-        active_brokers: 3,
-        cluster_id: "4YYgtjE_RKiJ_rDWp5MDbw",
-        broker_details: [
-          { id: 0, host: "devhcp1.ril.com:9093", isController: true, status: "ACTIVE" },
-          { id: 1, host: "devhcp2.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 2, host: "devhcp3.ril.com:9093", isController: false, status: "ACTIVE" }
-        ],
-        error_message: null
-      },
-      zookeeper: {
-        status: "HEALTHY",
-        expected_nodes: 3,
-        active_nodes: 3,
-        zookeeper_details: [
-          { id: 1, host: "devhcp-zk1.ril.com:2181", mode: "leader", status: "ACTIVE" },
-          { id: 2, host: "devhcp-zk2.ril.com:2181", mode: "follower", status: "ACTIVE" },
-          { id: 3, host: "devhcp-zk3.ril.com:2181", mode: "follower", status: "ACTIVE" }
-        ],
-        error_message: null
-      }
-    },
-    {
-      timestamp: new Date().toISOString(),
-      environment: "dev",
-      cluster_name: "rfh",
-      cluster_description: "Development RFH Kafka Cluster",
-      kafka: {
-        status: "HEALTHY",
-        expected_brokers: 2,
-        active_brokers: 2,
-        cluster_id: "3XXgtjE_RKiJ_rDWp5MDbr",
-        broker_details: [
-          { id: 0, host: "devrfh1.ril.com:9093", isController: true, status: "ACTIVE" },
-          { id: 1, host: "devrfh2.ril.com:9093", isController: false, status: "ACTIVE" }
-        ],
-        error_message: null
-      },
-      zookeeper: {
-        status: "HEALTHY",
-        expected_nodes: 2,
-        active_nodes: 2,
-        zookeeper_details: [
-          { id: 1, host: "devrfh-zk1.ril.com:2181", mode: "leader", status: "ACTIVE" },
-          { id: 2, host: "devrfh-zk2.ril.com:2181", mode: "follower", status: "ACTIVE" }
-        ],
-        error_message: null
-      }
-    },
-    {
-      timestamp: new Date().toISOString(),
-      environment: "dev",
-      cluster_name: "jiobp",
-      cluster_description: "Development JIOBP Kafka Cluster",
-      kafka: {
-        status: "UNHEALTHY",
-        expected_brokers: 3,
-        active_brokers: 2,
-        cluster_id: "6WWgtjE_RKiJ_rDWp5MDbj",
-        broker_details: [
-          { id: 0, host: "devjiobp1.ril.com:9093", isController: true, status: "ACTIVE" },
-          { id: 1, host: "devjiobp2.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 2, host: "devjiobp3.ril.com:9093", isController: false, status: "DOWN" }
-        ],
-        error_message: "Broker 2 connection timeout"
-      },
-      zookeeper: {
-        status: "HEALTHY",
-        expected_nodes: 3,
-        active_nodes: 3,
-        zookeeper_details: [
-          { id: 1, host: "devjiobp-zk1.ril.com:2181", mode: "leader", status: "ACTIVE" },
-          { id: 2, host: "devjiobp-zk2.ril.com:2181", mode: "follower", status: "ACTIVE" },
-          { id: 3, host: "devjiobp-zk3.ril.com:2181", mode: "follower", status: "ACTIVE" }
-        ],
-        error_message: null
-      }
-    },
-    // QAS Environment Clusters
-    {
-      timestamp: new Date().toISOString(),
-      environment: "qas",
-      cluster_name: "hcp",
-      cluster_description: "QA HCP Kafka Cluster",
-      kafka: {
-        status: "HEALTHY",
-        expected_brokers: 3,
-        active_brokers: 3,
-        cluster_id: "5ZZgtjE_RKiJ_rDWp5MDbx",
-        broker_details: [
-          { id: 0, host: "qahcp1.ril.com:9093", isController: true, status: "ACTIVE" },
-          { id: 1, host: "qahcp2.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 2, host: "qahcp3.ril.com:9093", isController: false, status: "ACTIVE" }
-        ],
-        error_message: null
-      },
-      zookeeper: {
-        status: "HEALTHY",
-        expected_nodes: 3,
-        active_nodes: 3,
-        zookeeper_details: [
-          { id: 1, host: "qahcp-zk1.ril.com:2181", mode: "leader", status: "ACTIVE" },
-          { id: 2, host: "qahcp-zk2.ril.com:2181", mode: "follower", status: "ACTIVE" },
-          { id: 3, host: "qahcp-zk3.ril.com:2181", mode: "follower", status: "ACTIVE" }
-        ],
-        error_message: null
-      }
-    },
-    {
-      timestamp: new Date().toISOString(),
-      environment: "qas",
-      cluster_name: "rfh",
-      cluster_description: "QA RFH Kafka Cluster",
-      kafka: {
-        status: "UNREACHABLE",
-        expected_brokers: 3,
-        active_brokers: 0,
-        cluster_id: null,
-        broker_details: [],
-        error_message: "Unable to connect to cluster - network timeout"
-      },
-      zookeeper: {
-        status: "UNREACHABLE",
-        expected_nodes: 3,
-        active_nodes: 0,
-        zookeeper_details: [],
-        error_message: "Connection refused to all Zookeeper nodes"
-      }
-    },
-    // PROD Environment Clusters
-    {
-      timestamp: new Date().toISOString(),
-      environment: "prod",
-      cluster_name: "hcp",
-      cluster_description: "Production HCP Kafka Cluster",
-      kafka: {
-        status: "HEALTHY",
-        expected_brokers: 5,
-        active_brokers: 5,
-        cluster_id: "7AAgtjE_RKiJ_rDWp5MDbp",
-        broker_details: [
-          { id: 0, host: "prodhcp1.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 1, host: "prodhcp2.ril.com:9093", isController: true, status: "ACTIVE" },
-          { id: 2, host: "prodhcp3.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 3, host: "prodhcp4.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 4, host: "prodhcp5.ril.com:9093", isController: false, status: "ACTIVE" }
-        ],
-        error_message: null
-      },
-      zookeeper: {
-        status: "HEALTHY",
-        expected_nodes: 5,
-        active_nodes: 5,
-        zookeeper_details: [
-          { id: 1, host: "prodhcp-zk1.ril.com:2181", mode: "follower", status: "ACTIVE" },
-          { id: 2, host: "prodhcp-zk2.ril.com:2181", mode: "leader", status: "ACTIVE" },
-          { id: 3, host: "prodhcp-zk3.ril.com:2181", mode: "follower", status: "ACTIVE" },
-          { id: 4, host: "prodhcp-zk4.ril.com:2181", mode: "follower", status: "ACTIVE" },
-          { id: 5, host: "prodhcp-zk5.ril.com:2181", mode: "follower", status: "ACTIVE" }
-        ],
-        error_message: null
-      }
-    },
-    {
-      timestamp: new Date().toISOString(),
-      environment: "prod",
-      cluster_name: "rfh",
-      cluster_description: "Production RFH Kafka Cluster",
-      kafka: {
-        status: "HEALTHY",
-        expected_brokers: 4,
-        active_brokers: 4,
-        cluster_id: "8BBgtjE_RKiJ_rDWp5MDbq",
-        broker_details: [
-          { id: 0, host: "prodrfh1.ril.com:9093", isController: true, status: "ACTIVE" },
-          { id: 1, host: "prodrfh2.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 2, host: "prodrfh3.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 3, host: "prodrfh4.ril.com:9093", isController: false, status: "ACTIVE" }
-        ],
-        error_message: null
-      },
-      zookeeper: {
-        status: "HEALTHY",
-        expected_nodes: 3,
-        active_nodes: 3,
-        zookeeper_details: [
-          { id: 1, host: "prodrfh-zk1.ril.com:2181", mode: "leader", status: "ACTIVE" },
-          { id: 2, host: "prodrfh-zk2.ril.com:2181", mode: "follower", status: "ACTIVE" },
-          { id: 3, host: "prodrfh-zk3.ril.com:2181", mode: "follower", status: "ACTIVE" }
-        ],
-        error_message: null
-      }
-    },
-    {
-      timestamp: new Date().toISOString(),
-      environment: "prod",
-      cluster_name: "jiobp",
-      cluster_description: "Production JIOBP Kafka Cluster",
-      kafka: {
-        status: "HEALTHY",
-        expected_brokers: 6,
-        active_brokers: 6,
-        cluster_id: "9CCgtjE_RKiJ_rDWp5MDbz",
-        broker_details: [
-          { id: 0, host: "prodjiobp1.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 1, host: "prodjiobp2.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 2, host: "prodjiobp3.ril.com:9093", isController: true, status: "ACTIVE" },
-          { id: 3, host: "prodjiobp4.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 4, host: "prodjiobp5.ril.com:9093", isController: false, status: "ACTIVE" },
-          { id: 5, host: "prodjiobp6.ril.com:9093", isController: false, status: "ACTIVE" }
-        ],
-        error_message: null
-      },
-      zookeeper: {
-        status: "HEALTHY",
-        expected_nodes: 5,
-        active_nodes: 5,
-        zookeeper_details: [
-          { id: 1, host: "prodjiobp-zk1.ril.com:2181", mode: "follower", status: "ACTIVE" },
-          { id: 2, host: "prodjiobp-zk2.ril.com:2181", mode: "follower", status: "ACTIVE" },
-          { id: 3, host: "prodjiobp-zk3.ril.com:2181", mode: "leader", status: "ACTIVE" },
-          { id: 4, host: "prodjiobp-zk4.ril.com:2181", mode: "follower", status: "ACTIVE" },
-          { id: 5, host: "prodjiobp-zk5.ril.com:2181", mode: "follower", status: "ACTIVE" }
-        ],
-        error_message: null
-      }
-    }
-  ];
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -388,43 +150,32 @@ const KafkaDashboard = () => {
         
         // Fetch available environments from API
         const envResponse = await fetch(`${apiUrl}/api/environments`);
-        if (envResponse.ok) {
-          const envData = await envResponse.json();
-          setEnvironments(envData);
-        } else {
-          // Fallback to mock environments if API fails
-          setEnvironments(["dev", "qas", "prod"]);
+        if (!envResponse.ok) {
+          throw new Error(`Failed to fetch environments: ${envResponse.status}`);
         }
+        const envData = await envResponse.json();
+        setEnvironments(envData);
         
         // Load all cluster data
         const clusterPromises: Promise<ClusterHealth>[] = [];
-        const environments = ["dev", "qas", "prod"]; // You can get this from API too
-        const clusterTypes = ["hcp", "rfh", "jiobp"]; // You can get this from API too
         
-        environments.forEach(env => {
-          clusterTypes.forEach(cluster => {
-            clusterPromises.push(
-              fetch(`${apiUrl}/api/health/${env}/${cluster}`)
-                .then(response => {
-                  if (!response.ok) throw new Error(`Failed to fetch ${env}/${cluster}`);
-                  return response.json();
-                })
-                .catch(error => {
-                  console.error(`Error loading ${env}/${cluster}:`, error);
-                  // Return mock data as fallback for this specific cluster
-                  const mockCluster = mockClusters.find(c => c.environment === env && c.cluster_name === cluster);
-                  return mockCluster || {
-                    timestamp: new Date().toISOString(),
-                    environment: env,
-                    cluster_name: cluster,
-                    cluster_description: `${env.toUpperCase()} ${cluster.toUpperCase()} Kafka Cluster`,
-                    kafka: { status: "UNREACHABLE" as const, error_message: "Failed to connect to API" },
-                    zookeeper: { status: "UNREACHABLE" as const, error_message: "Failed to connect to API" }
-                  };
-                })
-            );
-          });
-        });
+        for (const env of envData) {
+          // Get clusters for each environment
+          const clustersResponse = await fetch(`${apiUrl}/api/environments/${env}/clusters`);
+          if (clustersResponse.ok) {
+            const clusterNames = await clustersResponse.json();
+            
+            clusterNames.forEach((cluster: string) => {
+              clusterPromises.push(
+                fetch(`${apiUrl}/api/health/${env}/${cluster}`)
+                  .then(response => {
+                    if (!response.ok) throw new Error(`Failed to fetch ${env}/${cluster}`);
+                    return response.json();
+                  })
+              );
+            });
+          }
+        }
         
         const clusterData = await Promise.all(clusterPromises);
         setClusters(clusterData.filter(Boolean));
@@ -444,27 +195,16 @@ const KafkaDashboard = () => {
         
       } catch (error) {
         console.error("Failed to load initial data:", error);
-        // Fallback to mock data if everything fails
-        setClusters(mockClusters);
-        setEnvironments(["dev", "qas", "prod"]);
-        
-        const initialAutoRefresh: Record<string, boolean> = {};
-        const initialInterval: Record<string, number> = {};
-        
-        mockClusters.forEach(cluster => {
-          const key = `${cluster.environment}-${cluster.cluster_name}`;
-          initialAutoRefresh[key] = true;
-          initialInterval[key] = 30;
-        });
-        
-        setAutoRefresh(initialAutoRefresh);
-        setRefreshInterval(initialInterval);
+        setClusters([]);
+        setEnvironments([]);
       } finally {
         setLoading(false);
       }
     };
     
-    loadInitialData();
+    if (apiUrl) {
+      loadInitialData();
+    }
   }, [apiUrl]);
 
   // Auto-refresh effect
