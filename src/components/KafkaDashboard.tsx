@@ -307,66 +307,47 @@ const KafkaDashboard = () => {
         </div>
       </div>
 
-      {/* Settings Panel */}
-      <Card className="bg-gradient-card shadow-soft">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Settings className="h-5 w-5" />
-            Configuration
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="api-url">Backend API URL</Label>
-              <Input
-                id="api-url"
-                value={apiUrl}
-                onChange={(e) => setApiUrl(e.target.value)}
-                placeholder="http://localhost:8080"
-                className="mt-1"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Enter your Kafka Health Check API endpoint
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Single Cluster Card */}
       {currentCluster ? (
-        <div className="max-w-4xl mx-auto">
-          <Card className="bg-gradient-card shadow-medium hover:shadow-strong transition-all duration-300">
-            <CardHeader>
+        <div className="max-w-6xl mx-auto animate-fade-in">
+          <Card className="bg-gradient-card shadow-strong hover:shadow-elegant transition-all duration-500 border-0 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-subtle opacity-50" />
+            <CardHeader className="relative">
               <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Server className="h-5 w-5 text-primary" />
-                    {currentCluster.cluster_name.toUpperCase()} - {selectedEnv.toUpperCase()}
+                <div className="space-y-2">
+                  <CardTitle className="flex items-center gap-3 text-2xl font-bold">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Server className="h-6 w-6 text-primary" />
+                    </div>
+                    {currentCluster.cluster_name.toUpperCase()} 
+                    <Badge variant="outline" className="text-xs font-medium bg-background/50">
+                      {selectedEnv.toUpperCase()}
+                    </Badge>
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-muted-foreground">
                     {currentCluster.cluster_description}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => toggleAutoRefresh(`${selectedEnv}-${selectedCluster}`)}
                     className={cn(
-                      "transition-colors",
-                      autoRefresh[`${selectedEnv}-${selectedCluster}`] && "bg-success-light border-success text-success"
+                      "transition-all duration-300 hover-scale",
+                      autoRefresh[`${selectedEnv}-${selectedCluster}`] 
+                        ? "bg-success/10 border-success/30 text-success hover:bg-success/20" 
+                        : "hover:bg-muted/50"
                     )}
                   >
-                    <Clock className="h-4 w-4 mr-1" />
+                    <Clock className="h-4 w-4 mr-2" />
                     Auto {autoRefresh[`${selectedEnv}-${selectedCluster}`] ? 'ON' : 'OFF'}
                   </Button>
                   {autoRefresh[`${selectedEnv}-${selectedCluster}`] && (
                     <select
                       value={refreshInterval[`${selectedEnv}-${selectedCluster}`] || 30}
                       onChange={(e) => updateRefreshInterval(`${selectedEnv}-${selectedCluster}`, Number(e.target.value))}
-                      className="bg-card border border-border rounded px-2 py-1 text-xs"
+                      className="bg-background/80 backdrop-blur-sm border border-border/50 rounded-lg px-3 py-2 text-sm hover:bg-background transition-colors"
                     >
                       <option value={10}>10s</option>
                       <option value={30}>30s</option>
@@ -377,197 +358,246 @@ const KafkaDashboard = () => {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative space-y-6">
               <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="kafka">Kafka</TabsTrigger>
-                  <TabsTrigger value="zookeeper">Zookeeper</TabsTrigger>
-                  <TabsTrigger value="certificates">SSL Certificate</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-4 bg-background/50 backdrop-blur-sm">
+                  <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    Overview
+                  </TabsTrigger>
+                  <TabsTrigger value="kafka" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    Kafka
+                  </TabsTrigger>
+                  <TabsTrigger value="zookeeper" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    Zookeeper
+                  </TabsTrigger>
+                  <TabsTrigger value="certificates" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    SSL Certificate
+                  </TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="overview" className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(currentCluster.kafka.status)}
-                        <span className="font-medium">Kafka</span>
-                      </div>
-                      {getStatusBadge(currentCluster.kafka.status)}
-                      <p className="text-xs text-muted-foreground">
-                        {currentCluster.kafka.active_brokers}/{currentCluster.kafka.expected_brokers} brokers active
-                      </p>
-                    </div>
+                <TabsContent value="overview" className="space-y-6 mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="bg-background/30 backdrop-blur-sm border-border/50 hover-scale transition-all duration-300">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-3">
+                          {getStatusIcon(currentCluster.kafka.status)}
+                          <span className="font-semibold text-lg">Kafka</span>
+                        </div>
+                        {getStatusBadge(currentCluster.kafka.status)}
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {currentCluster.kafka.active_brokers}/{currentCluster.kafka.expected_brokers} brokers active
+                        </p>
+                      </CardContent>
+                    </Card>
                     
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(currentCluster.zookeeper.status)}
-                        <span className="font-medium">Zookeeper</span>
-                      </div>
-                      {getStatusBadge(currentCluster.zookeeper.status)}
-                      <p className="text-xs text-muted-foreground">
-                        {currentCluster.zookeeper.active_nodes}/{currentCluster.zookeeper.expected_nodes} nodes active
-                      </p>
-                    </div>
+                    <Card className="bg-background/30 backdrop-blur-sm border-border/50 hover-scale transition-all duration-300">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-3">
+                          {getStatusIcon(currentCluster.zookeeper.status)}
+                          <span className="font-semibold text-lg">Zookeeper</span>
+                        </div>
+                        {getStatusBadge(currentCluster.zookeeper.status)}
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {currentCluster.zookeeper.active_nodes}/{currentCluster.zookeeper.expected_nodes} nodes active
+                        </p>
+                      </CardContent>
+                    </Card>
 
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-5 w-5 text-muted-foreground" />
-                        <span className="font-medium">SSL Certificate</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {currentCluster.kafka.certificates?.[0] && getCertificateIcon(currentCluster.kafka.certificates[0].status)}
-                        {currentCluster.kafka.certificates?.[0] && getCertificateBadge(currentCluster.kafka.certificates[0].status)}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {currentCluster.kafka.certificates?.[0]?.expires_in_days} days until expiry
-                      </p>
-                    </div>
+                    <Card className="bg-background/30 backdrop-blur-sm border-border/50 hover-scale transition-all duration-300">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-3">
+                          <Shield className="h-6 w-6 text-muted-foreground" />
+                          <span className="font-semibold text-lg">SSL Certificate</span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2">
+                          {currentCluster.kafka.certificates?.[0] && getCertificateIcon(currentCluster.kafka.certificates[0].status)}
+                          {currentCluster.kafka.certificates?.[0] && getCertificateBadge(currentCluster.kafka.certificates[0].status)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {currentCluster.kafka.certificates?.[0]?.expires_in_days} days until expiry
+                        </p>
+                      </CardContent>
+                    </Card>
                   </div>
                   
-                  <div className="pt-2 border-t border-border">
-                    <p className="text-xs text-muted-foreground">
-                      Last updated: {new Date(currentCluster.timestamp).toLocaleTimeString()}
-                    </p>
-                  </div>
+                  <Card className="bg-background/20 backdrop-blur-sm border-border/30">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 bg-success rounded-full pulse" />
+                          <span className="text-sm font-medium">Last updated</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(currentCluster.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </TabsContent>
                 
-                <TabsContent value="kafka" className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium flex items-center gap-2">
-                      <Database className="h-4 w-4" />
-                      Brokers Status
-                    </h4>
-                    {getStatusBadge(currentCluster.kafka.status)}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {currentCluster.kafka.broker_details?.map((broker) => (
-                      <div key={broker.id} className="flex items-center justify-between p-2 bg-secondary/50 rounded-md">
-                        <div>
-                          <p className="text-sm font-medium">Broker {broker.id}</p>
-                          <p className="text-xs text-muted-foreground">{broker.host}</p>
-                        </div>
-                        <div className="text-right">
-                          <Badge 
-                            variant={broker.status === "ACTIVE" ? "default" : "destructive"}
-                            className="text-xs"
-                          >
-                            {broker.status}
-                          </Badge>
-                          {broker.isController && (
-                            <p className="text-xs text-success mt-1">Controller</p>
-                          )}
-                        </div>
+                <TabsContent value="kafka" className="space-y-4 mt-6">
+                  <Card className="bg-background/30 backdrop-blur-sm border-border/50">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold flex items-center gap-2">
+                          <Database className="h-5 w-5 text-primary" />
+                          Brokers Status
+                        </h4>
+                        {getStatusBadge(currentCluster.kafka.status)}
                       </div>
-                    ))}
-                  </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {currentCluster.kafka.broker_details?.map((broker) => (
+                          <div key={broker.id} className="flex items-center justify-between p-4 bg-background/50 rounded-lg border border-border/30 hover:bg-background/70 transition-colors">
+                            <div className="space-y-1">
+                              <p className="font-medium">Broker {broker.id}</p>
+                              <p className="text-sm text-muted-foreground font-mono">{broker.host}</p>
+                            </div>
+                            <div className="text-right space-y-1">
+                              <Badge 
+                                variant={broker.status === "ACTIVE" ? "default" : "destructive"}
+                                className="text-xs"
+                              >
+                                {broker.status}
+                              </Badge>
+                              {broker.isController && (
+                                <p className="text-xs text-primary font-semibold">Controller</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
                   
                   {currentCluster.kafka.error_message && (
-                    <div className="p-2 bg-error-light rounded-md border border-error/20">
-                      <p className="text-xs text-error">{currentCluster.kafka.error_message}</p>
-                    </div>
+                    <Card className="bg-error/5 border-error/20">
+                      <CardContent className="p-4">
+                        <p className="text-sm text-error">{currentCluster.kafka.error_message}</p>
+                      </CardContent>
+                    </Card>
                   )}
                 </TabsContent>
                 
-                <TabsContent value="zookeeper" className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium flex items-center gap-2">
-                      <Database className="h-4 w-4" />
-                      Ensemble Status
-                    </h4>
-                    {getStatusBadge(currentCluster.zookeeper.status)}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {currentCluster.zookeeper.zookeeper_details?.map((node) => (
-                      <div key={node.id} className="flex items-center justify-between p-2 bg-secondary/50 rounded-md">
-                        <div>
-                          <p className="text-sm font-medium">Node {node.id}</p>
-                          <p className="text-xs text-muted-foreground">{node.host}</p>
-                        </div>
-                        <div className="text-right">
-                          <Badge 
-                            variant={node.status === "ACTIVE" ? "default" : "destructive"}
-                            className="text-xs"
-                          >
-                            {node.status}
-                          </Badge>
-                          <p className="text-xs text-primary mt-1 capitalize">{node.mode}</p>
-                        </div>
+                <TabsContent value="zookeeper" className="space-y-4 mt-6">
+                  <Card className="bg-background/30 backdrop-blur-sm border-border/50">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold flex items-center gap-2">
+                          <Database className="h-5 w-5 text-primary" />
+                          Ensemble Status
+                        </h4>
+                        {getStatusBadge(currentCluster.zookeeper.status)}
                       </div>
-                    ))}
-                  </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {currentCluster.zookeeper.zookeeper_details?.map((node) => (
+                          <div key={node.id} className="flex items-center justify-between p-4 bg-background/50 rounded-lg border border-border/30 hover:bg-background/70 transition-colors">
+                            <div className="space-y-1">
+                              <p className="font-medium">Node {node.id}</p>
+                              <p className="text-sm text-muted-foreground font-mono">{node.host}</p>
+                            </div>
+                            <div className="text-right space-y-1">
+                              <Badge 
+                                variant={node.status === "ACTIVE" ? "default" : "destructive"}
+                                className="text-xs"
+                              >
+                                {node.status}
+                              </Badge>
+                              <p className="text-xs text-primary font-semibold capitalize">{node.mode}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
                   
                   {currentCluster.zookeeper.error_message && (
-                    <div className="p-2 bg-error-light rounded-md border border-error/20">
-                      <p className="text-xs text-error">{currentCluster.zookeeper.error_message}</p>
-                    </div>
+                    <Card className="bg-error/5 border-error/20">
+                      <CardContent className="p-4">
+                        <p className="text-sm text-error">{currentCluster.zookeeper.error_message}</p>
+                      </CardContent>
+                    </Card>
                   )}
                 </TabsContent>
                 
-                <TabsContent value="certificates" className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Kafka Server SSL Certificate
-                    </h4>
-                    {currentCluster.kafka.certificates?.[0] && getCertificateBadge(currentCluster.kafka.certificates[0].status)}
-                  </div>
-                  
-                  {currentCluster.kafka.certificates?.[0] && (
-                    <div className="p-4 bg-secondary/50 rounded-md border-l-4 border-l-primary">
+                <TabsContent value="certificates" className="space-y-4 mt-6">
+                  <Card className="bg-background/30 backdrop-blur-sm border-border/50">
+                    <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {getCertificateIcon(currentCluster.kafka.certificates[0].status)}
-                          <div>
-                            <p className="text-sm font-medium">{currentCluster.kafka.certificates[0].name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Expires: {currentCluster.kafka.certificates[0].expiry_date}
-                            </p>
+                        <h4 className="font-semibold flex items-center gap-2">
+                          <Shield className="h-5 w-5 text-primary" />
+                          Kafka Server SSL Certificate
+                        </h4>
+                        {currentCluster.kafka.certificates?.[0] && getCertificateBadge(currentCluster.kafka.certificates[0].status)}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {currentCluster.kafka.certificates?.[0] && (
+                        <div className="p-6 bg-gradient-subtle rounded-lg border-l-4 border-l-primary">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-4">
+                              <div className="p-3 bg-primary/10 rounded-full">
+                                {getCertificateIcon(currentCluster.kafka.certificates[0].status)}
+                              </div>
+                              <div>
+                                <h5 className="font-semibold text-lg">{currentCluster.kafka.certificates[0].name}</h5>
+                                <p className="text-sm text-muted-foreground">
+                                  Expires: {currentCluster.kafka.certificates[0].expiry_date}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className={cn(
+                                "text-3xl font-bold",
+                                currentCluster.kafka.certificates[0].expires_in_days <= 10 && "text-error",
+                                currentCluster.kafka.certificates[0].expires_in_days <= 50 && currentCluster.kafka.certificates[0].expires_in_days > 10 && "text-warning",
+                                currentCluster.kafka.certificates[0].expires_in_days > 50 && "text-success"
+                              )}>
+                                {currentCluster.kafka.certificates[0].expires_in_days}
+                              </p>
+                              <p className="text-sm text-muted-foreground">days left</p>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/30">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Status</p>
+                              <p className={cn(
+                                "font-semibold",
+                                currentCluster.kafka.certificates[0].status === "HEALTHY" && "text-success",
+                                currentCluster.kafka.certificates[0].status === "WARNING" && "text-warning",
+                                currentCluster.kafka.certificates[0].status === "CRITICAL" && "text-error"
+                              )}>
+                                {currentCluster.kafka.certificates[0].status === "HEALTHY" && "✓ Certificate Valid"}
+                                {currentCluster.kafka.certificates[0].status === "WARNING" && "⚠ Expiring Soon"}
+                                {currentCluster.kafka.certificates[0].status === "CRITICAL" && "🚨 Critical Alert"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Environment</p>
+                              <p className="font-semibold">{selectedEnv.toUpperCase()}</p>
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className={cn(
-                            "text-lg font-bold",
-                            currentCluster.kafka.certificates[0].expires_in_days <= 10 && "text-error",
-                            currentCluster.kafka.certificates[0].expires_in_days <= 50 && currentCluster.kafka.certificates[0].expires_in_days > 10 && "text-warning",
-                            currentCluster.kafka.certificates[0].expires_in_days > 50 && "text-success"
-                          )}>
-                            {currentCluster.kafka.certificates[0].expires_in_days}
-                          </p>
-                          <p className="text-xs text-muted-foreground">days left</p>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-3 pt-3 border-t border-border">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-muted-foreground">Certificate Status:</span>
-                          <span className={cn(
-                            "font-semibold",
-                            currentCluster.kafka.certificates[0].status === "HEALTHY" && "text-success",
-                            currentCluster.kafka.certificates[0].status === "WARNING" && "text-warning",
-                            currentCluster.kafka.certificates[0].status === "CRITICAL" && "text-error"
-                          )}>
-                            {currentCluster.kafka.certificates[0].status === "HEALTHY" && "✓ Valid"}
-                            {currentCluster.kafka.certificates[0].status === "WARNING" && "⚠ Expiring Soon"}
-                            {currentCluster.kafka.certificates[0].status === "CRITICAL" && "🚨 Critical - Expires Soon"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                      )}
+                    </CardContent>
+                  </Card>
                 </TabsContent>
               </Tabs>
             </CardContent>
           </Card>
         </div>
       ) : (
-        <Card className="text-center py-12">
+        <Card className="text-center py-16 animate-fade-in">
           <CardContent>
-            <Server className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No cluster data available</h3>
-            <p className="text-muted-foreground">
+            <div className="p-4 bg-muted/20 rounded-full w-fit mx-auto mb-6">
+              <Server className="h-16 w-16 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">No cluster data available</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">
               Unable to load data for {selectedCluster.toUpperCase()} in {selectedEnv.toUpperCase()} environment.
             </p>
           </CardContent>
