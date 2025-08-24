@@ -15,7 +15,8 @@ import {
   Globe,
   AlertTriangle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,13 @@ interface ZookeeperDetail {
   status: string;
 }
 
+interface CertificateInfo {
+  name: string;
+  expires_in_days: number;
+  expiry_date: string;
+  status: "CRITICAL" | "WARNING" | "HEALTHY";
+}
+
 interface HealthStatus {
   status: "HEALTHY" | "UNHEALTHY" | "UNREACHABLE";
   expected_brokers?: number;
@@ -42,6 +50,7 @@ interface HealthStatus {
   cluster_id?: string;
   broker_details?: BrokerDetail[];
   zookeeper_details?: ZookeeperDetail[];
+  certificates?: CertificateInfo[];
   error_message?: string | null;
 }
 
@@ -64,6 +73,85 @@ const KafkaDashboard = () => {
   const [selectedEnv, setSelectedEnv] = useState<string>("dev");
 
 
+  const generateMockData = (env: string): ClusterHealth[] => {
+    const clusters = ['hcp', 'rfh', 'jiobp'];
+    return clusters.map(clusterName => ({
+      timestamp: new Date().toISOString(),
+      environment: env,
+      cluster_name: clusterName,
+      cluster_description: `${clusterName.toUpperCase()} Kafka Cluster - ${env.toUpperCase()} Environment`,
+      kafka: {
+        status: Math.random() > 0.8 ? "UNHEALTHY" : "HEALTHY" as const,
+        expected_brokers: 3,
+        active_brokers: Math.random() > 0.8 ? 2 : 3,
+        cluster_id: `kafka-${clusterName}-${env}`,
+        broker_details: [
+          { id: 1, host: `kafka-${clusterName}-1.${env}.company.com:9092`, isController: true, status: "ACTIVE" },
+          { id: 2, host: `kafka-${clusterName}-2.${env}.company.com:9092`, isController: false, status: "ACTIVE" },
+          { id: 3, host: `kafka-${clusterName}-3.${env}.company.com:9092`, isController: false, status: Math.random() > 0.8 ? "INACTIVE" : "ACTIVE" }
+        ],
+        certificates: [
+          { 
+            name: "SSL Certificate", 
+            expires_in_days: Math.floor(Math.random() * 200), 
+            expiry_date: new Date(Date.now() + Math.random() * 200 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
+            status: "HEALTHY" as const 
+          },
+          { 
+            name: "Client Auth Certificate", 
+            expires_in_days: Math.floor(Math.random() * 60), 
+            expiry_date: new Date(Date.now() + Math.random() * 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
+            status: "WARNING" as const 
+          },
+          { 
+            name: "Inter-Broker Certificate", 
+            expires_in_days: Math.floor(Math.random() * 10), 
+            expiry_date: new Date(Date.now() + Math.random() * 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
+            status: "CRITICAL" as const 
+          }
+        ].map(cert => ({
+          ...cert,
+          status: cert.expires_in_days <= 10 ? "CRITICAL" : cert.expires_in_days <= 50 ? "WARNING" : "HEALTHY" as const
+        }))
+      },
+      zookeeper: {
+        status: Math.random() > 0.9 ? "UNHEALTHY" : "HEALTHY" as const,
+        expected_nodes: 3,
+        active_nodes: 3,
+        zookeeper_details: [
+          { id: 1, host: `zk-${clusterName}-1.${env}.company.com:2181`, mode: "leader", status: "ACTIVE" },
+          { id: 2, host: `zk-${clusterName}-2.${env}.company.com:2181`, mode: "follower", status: "ACTIVE" },
+          { id: 3, host: `zk-${clusterName}-3.${env}.company.com:2181`, mode: "follower", status: "ACTIVE" }
+        ]
+      }
+    }));
+  };
+
+  const getCertificateIcon = (status: string) => {
+    switch (status) {
+      case "HEALTHY":
+        return <Shield className="h-4 w-4 text-success" />;
+      case "WARNING":
+        return <Shield className="h-4 w-4 text-warning" />;
+      case "CRITICAL":
+        return <Shield className="h-4 w-4 text-error" />;
+      default:
+        return <Shield className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
+
+  const getCertificateBadge = (status: string) => {
+    switch (status) {
+      case "HEALTHY":
+        return <Badge className="bg-success-light text-success border-success/20 text-xs">Valid</Badge>;
+      case "WARNING":
+        return <Badge className="bg-warning-light text-warning border-warning/20 text-xs">Expiring Soon</Badge>;
+      case "CRITICAL":
+        return <Badge className="bg-error-light text-error border-error/20 text-xs">Expires Soon</Badge>;
+      default:
+        return <Badge variant="secondary" className="text-xs">Unknown</Badge>;
+    }
+  };
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "HEALTHY":
@@ -144,68 +232,27 @@ const KafkaDashboard = () => {
   };
 
   useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch available environments from API
-        const envResponse = await fetch(`${apiUrl}/api/environments`);
-        if (!envResponse.ok) {
-          throw new Error(`Failed to fetch environments: ${envResponse.status}`);
-        }
-        const envData = await envResponse.json();
-        setEnvironments(envData);
-        
-        // Load all cluster data
-        const clusterPromises: Promise<ClusterHealth>[] = [];
-        
-        for (const env of envData) {
-          // Get clusters for each environment
-          const clustersResponse = await fetch(`${apiUrl}/api/environments/${env}/clusters`);
-          if (clustersResponse.ok) {
-            const clusterNames = await clustersResponse.json();
-            
-            clusterNames.forEach((cluster: string) => {
-              clusterPromises.push(
-                fetch(`${apiUrl}/api/health/${env}/${cluster}`)
-                  .then(response => {
-                    if (!response.ok) throw new Error(`Failed to fetch ${env}/${cluster}`);
-                    return response.json();
-                  })
-              );
-            });
-          }
-        }
-        
-        const clusterData = await Promise.all(clusterPromises);
-        setClusters(clusterData.filter(Boolean));
-        
-        // Initialize auto-refresh settings
-        const initialAutoRefresh: Record<string, boolean> = {};
-        const initialInterval: Record<string, number> = {};
-        
-        clusterData.forEach(cluster => {
-          const key = `${cluster.environment}-${cluster.cluster_name}`;
-          initialAutoRefresh[key] = true; // Auto-refresh enabled by default
-          initialInterval[key] = 30; // 30 seconds default
-        });
-        
-        setAutoRefresh(initialAutoRefresh);
-        setRefreshInterval(initialInterval);
-        
-      } catch (error) {
-        console.error("Failed to load initial data:", error);
-        setClusters([]);
-        setEnvironments([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Use mock data for now
+    const mockEnvs = ['dev', 'qas', 'prod'];
+    setEnvironments(mockEnvs);
     
-    if (apiUrl) {
-      loadInitialData();
-    }
-  }, [apiUrl]);
+    // Generate mock data for the selected environment
+    const mockData = generateMockData(selectedEnv);
+    setClusters(mockData);
+    
+    // Initialize auto-refresh settings
+    const initialAutoRefresh: Record<string, boolean> = {};
+    const initialInterval: Record<string, number> = {};
+    
+    mockData.forEach(cluster => {
+      const key = `${cluster.environment}-${cluster.cluster_name}`;
+      initialAutoRefresh[key] = true;
+      initialInterval[key] = 30;
+    });
+    
+    setAutoRefresh(initialAutoRefresh);
+    setRefreshInterval(initialInterval);
+  }, [selectedEnv]);
 
   // Auto-refresh effect
   useEffect(() => {
@@ -347,14 +394,15 @@ const KafkaDashboard = () => {
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="overview" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="kafka">Kafka</TabsTrigger>
                     <TabsTrigger value="zookeeper">Zookeeper</TabsTrigger>
+                    <TabsTrigger value="certificates">Certificates</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="overview" className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           {getStatusIcon(cluster.kafka.status)}
@@ -374,6 +422,23 @@ const KafkaDashboard = () => {
                         {getStatusBadge(cluster.zookeeper.status)}
                         <p className="text-xs text-muted-foreground">
                           {cluster.zookeeper.active_nodes}/{cluster.zookeeper.expected_nodes} nodes active
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-5 w-5 text-muted-foreground" />
+                          <span className="font-medium">Certificates</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {cluster.kafka.certificates?.map((cert, index) => (
+                            <div key={index} className="flex items-center gap-1">
+                              {getCertificateIcon(cert.status)}
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {cluster.kafka.certificates?.filter(c => c.status === "CRITICAL").length || 0} critical alerts
                         </p>
                       </div>
                     </div>
@@ -457,6 +522,66 @@ const KafkaDashboard = () => {
                         <p className="text-xs text-error">{cluster.zookeeper.error_message}</p>
                       </div>
                     )}
+                  </TabsContent>
+                  
+                  <TabsContent value="certificates" className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        SSL Certificates
+                      </h4>
+                      <Badge variant="outline" className="text-xs">
+                        {cluster.kafka.certificates?.length || 0} total
+                      </Badge>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {cluster.kafka.certificates?.map((cert, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+                          <div className="flex items-center gap-3">
+                            {getCertificateIcon(cert.status)}
+                            <div>
+                              <p className="text-sm font-medium">{cert.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Expires: {cert.expiry_date}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            {getCertificateBadge(cert.status)}
+                            <p className={cn(
+                              "text-xs mt-1 font-medium",
+                              cert.expires_in_days <= 10 && "text-error",
+                              cert.expires_in_days <= 50 && cert.expires_in_days > 10 && "text-warning",
+                              cert.expires_in_days > 50 && "text-success"
+                            )}>
+                              {cert.expires_in_days} days left
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
+                      <div className="text-center">
+                        <p className="text-xs text-success font-medium">
+                          {cluster.kafka.certificates?.filter(c => c.status === "HEALTHY").length || 0}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Healthy</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-warning font-medium">
+                          {cluster.kafka.certificates?.filter(c => c.status === "WARNING").length || 0}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Warning</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-error font-medium">
+                          {cluster.kafka.certificates?.filter(c => c.status === "CRITICAL").length || 0}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Critical</p>
+                      </div>
+                    </div>
                   </TabsContent>
                 </Tabs>
               </CardContent>
